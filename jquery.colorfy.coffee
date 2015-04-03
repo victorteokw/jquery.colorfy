@@ -6,15 +6,17 @@
 # //g -> inline image
 # //g -> reference image
 markdownSyntaxDescriptor =
-  "title":         [/^\s{0,3}\#{1,6}.*$/m, /^.+?\n[=-]{2,}\s*$/m]
+#  "title":         [/^\s{0,3}\#{1,6}.*$/m, /^.+?\n[=-]{2,}\s*$/m]
+  "title":         /^\s{0,3}\#{1,6}.*$/m
   "block":         /^\s{0,3}>\s+.*$/m
-  "emphasis":      /([\*_]).+?\1/m
-  "strong":        /([\*_]{2}).+?\1/m
-  "strikethrough": /~~.+?~~/m
   "orderedlist":   /^\s*[0-9]+\. .+$/m
   "unorderedlist": /^\s*[*+-] .+$/m
-  "inlinecode":    /`.+?`/m
-  "codeblock":     [/```.+?```/m, /^(?: {4}|\t).+$/m]
+  "strong":        /([\*_]{2})[^\*_]+?\1/m
+  "emphasis":      /([\*_])[^\*_]+?\1(?![\*_])/m
+  "strikethrough": /~~.+?~~/m
+  "inlinecode":    /`[^`\n]+?`/
+  "codeblock":     /```[.\n]+?```/m
+#  "codeblock":     [/```.+?```/m, /^(?: {4}|\t).+$/m]
   "rule":          /^[-\*]{3,}/m
   # "table":
   # "inlinehtml"
@@ -25,13 +27,20 @@ markdownSyntaxDescriptor =
   # inline image
   # reference image
 
-
+objectToAssociativeArray = (obj) ->
+  return obj if Array.isArray(obj)
+  retArr = []
+  for key, value of obj
+    assObj = {}
+    assObj[key] = value
+    retArr.unshift(assObj)
+  retArr
 
 createNode = (content, htmlfier, descriptor, klass) ->
   node = {}
   node.content = content
   node.htmlfier = htmlfier
-  node.descriptor = descriptor
+  node.descriptor = objectToAssociativeArray(descriptor)
   node.klass = klass
   node.subnodes = []
   node.supernode = null # Unused
@@ -50,7 +59,29 @@ createNode = (content, htmlfier, descriptor, klass) ->
     return openSpan + content + closeSpan
 
   node.process = ->
-
+    debugger
+    if @descriptor.length == 0
+      @terminate = true
+    else
+      rule = @descriptor.pop()
+      # This is not a loop, only one key value pair for a rule
+      for klass, regexp of rule
+        currentIndex = 0
+        remainder = @content
+        while matchData = regexp.exec(remainder)
+          hasMatchData = true
+          unmatched = remainder.substr(currentIndex, matchData.index)
+          matched = matchData[0]
+          currentIndex = matched.length + matchData.index
+          remainder = remainder.substr(currentIndex)
+          currentIndex = 0
+          if unmatched.length > 0
+            unmatchedNewNode = createNode(unmatched, @htmlfier, @descriptor.slice(0), null)
+            @subnodes.push(unmatchedNewNode)
+          matchedNewNode = createNode(matched, @htmlfier, @descriptor.slice(0), klass)
+          @subnodes.push(matchedNewNode)
+        newNode = createNode(remainder, @htmlfier, @descriptor.slice(0), null)
+        @subnodes.push(newNode)
     node.processed = true
 
   return node
@@ -68,7 +99,9 @@ htmlfy = (dataText) ->
 
 colorfy = (dataText, descriptor, htmlfier) ->
   htmlfier ||= htmlfy
-  return htmlfier(dataText)
+  node = createNode(dataText, htmlfier, descriptor, 'markdown')
+  return node.toHTML()
+
 
 dataTextToFormattedText = (dataText) ->
   colorfy(dataText, markdownSyntaxDescriptor, htmlfy)
@@ -84,6 +117,10 @@ formattedTextToDataText = (formattedText) ->
   formattedText = formattedText.replace(/&#x2F/g, "/")            # &#x2F -> /
   formattedText = formattedText.replace(/&nbsp;/g, ' ')           # &nbsp; -> ' '
   return formattedText
+
+saveCursorLocation = () ->
+
+restoreCursorLocation = () ->
 
 $.fn.colorfy = (plainTextProcessor) ->
 
@@ -102,6 +139,8 @@ $.fn.colorfy = (plainTextProcessor) ->
   # div.css("display", 'inline-block')
   # Insert the fake text area
   this.after(div)
+  # Hide the original and real one
+  this.css("display", "none")
 
   # Event Binding
   # to keep form and fake div in sync
@@ -110,12 +149,14 @@ $.fn.colorfy = (plainTextProcessor) ->
     div.data("content", area.val()).trigger("receive-content")
 
   div.on "receive-content", ->
+    # Fix big cursor issue
     if div.text().length == 0
       div.css("display", "block")
     else
       div.css("display", "inline-block")
     div.html(dataTextToFormattedText(div.data("content")))
   div.on "send-content", ->
+    # Fix big cursor issue
     if div.text().length == 0
       div.css("display", "block")
     else
@@ -123,7 +164,7 @@ $.fn.colorfy = (plainTextProcessor) ->
     area.val(div.data("content"))
 
   div.on "keyup paste", ->
-    div.data("content", formattedTextToDataText(div.html())).trigger("send-content")
+    div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
 
 
   # Initialize content
