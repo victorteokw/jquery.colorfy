@@ -1,3 +1,11 @@
+# Documentation
+#
+# For the Japanese / Chinese input method issue
+# http://stackoverflow.com/questions/1391278/contenteditable-change-events
+#
+# For the cursor issue
+# ;(
+
 # simple markdown parser rules
 # /[.+](.+)/g -> inline link
 # /[.+][.+]/g -> reference link
@@ -139,27 +147,29 @@ cursorLocationFromNodeAndOffset = (rootNode, anchorNode, anchorOffset) ->
           location += cursorLocationFromNodeAndOffset(childNode, anchorNode, anchorOffset)
   return location
 
-nodeAndOffsetFromCursorLocation = (cursorLocation, rootNode) ->
-  if rootNode.nodeType == Node.TEXT_NODE
-    if rootNode.nodeValue.length >= cursorLocation
-      return [rootNode, cursorLocation]
-    else
-      return [null, rootNode.nodeValue.length]
-  else if rootNode.tagName == "BR"
-    if cursorLocation == 1
-      return [rootNode, 0]
-    return [null, 1]
-#  else if rootNode.tagName == "SPAN"
+lengthOfNode = (node) ->
+  if node.nodeType == Node.TEXT_NODE
+    return node.nodeValue.length
+  else if node.tagName == "BR"
+    return 1
+  else if (node.tagName == "SPAN") || (node.tagName == "DIV")
+    length = 0
+    for childNode in node.childNodes
+      length += lengthOfNode(childNode)
+    return length
+
+nodeAndOffsetFromCursorLocation = (location, node) ->
+  return [] if lengthOfNode(node) < location
+  if node.nodeType == Node.TEXT_NODE
+    return [node, location]
+  else if node.tagName == "BR"
+    return [node, location]
   else
-    toMinus = 0
-    for childNode in rootNode.childNodes
-      [retNod, retOff] = nodeAndOffsetFromCursorLocation(cursorLocation, childNode)
-      if retOff and !retNod
-        cursorLocation -= retOff
-        toMinus += retOff
-      else if retOff and retNod
-        return [retNod, retOff]
-  [null, toMinus]
+    for childNode in node.childNodes
+      if lengthOfNode(childNode) < location
+        location -= lengthOfNode(childNode)
+      else
+        return nodeAndOffsetFromCursorLocation(location, childNode)
 
 saveCursorLocation = (jObject) ->
   plainObject = jObject[0]
@@ -230,7 +240,7 @@ $.fn.colorfy = (plainTextProcessor) ->
       div.css("display", "inline-block")
     area.val(div.data("content"))
 
-  div.on "keyup paste", ->
+  div.on "input paste", ->
     saveCursorLocation(div)
     div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
 
