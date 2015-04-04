@@ -59,7 +59,6 @@ createNode = (content, htmlfier, descriptor, klass) ->
     return openSpan + content + closeSpan
 
   node.process = ->
-    debugger
     if @descriptor.length == 0
       @terminate = true
     else
@@ -118,9 +117,74 @@ formattedTextToDataText = (formattedText) ->
   formattedText = formattedText.replace(/&nbsp;/g, ' ')           # &nbsp; -> ' '
   return formattedText
 
-saveCursorLocation = () ->
+cursorLocationFromNodeAndOffset = (rootNode, anchorNode, anchorOffset) ->
+  location = 0
+  if rootNode == anchorNode
+    if rootNode.nodeType == Node.TEXT_NODE
+      location += anchorOffset
+    else if rootNode.tagName == "SPAN"
+      for i in [0..anchorOffset] by 1
+        location += cursorLocationFromNodeAndOffset(rootNode.childNodes[i], anchorNode, anchorOffset)
+  else
+    if rootNode.nodeType == Node.TEXT_NODE
+      location += rootNode.nodeValue.length
+    else if rootNode.tagName == "BR"
+      location += 1
+    else
+      for childNode in rootNode.childNodes
+        if childNode == anchorNode
+          location += cursorLocationFromNodeAndOffset(childNode, anchorNode, anchorOffset)
+          return location
+        else
+          location += cursorLocationFromNodeAndOffset(childNode, anchorNode, anchorOffset)
+  return location
 
-restoreCursorLocation = () ->
+nodeAndOffsetFromCursorLocation = (cursorLocation, rootNode) ->
+  if rootNode.nodeType == Node.TEXT_NODE
+    if rootNode.nodeValue.length >= cursorLocation
+      return [rootNode, cursorLocation]
+    else
+      return [null, rootNode.nodeValue.length]
+  else if rootNode.tagName == "BR"
+    if cursorLocation == 1
+      return [rootNode, 0]
+    return [null, 1]
+#  else if rootNode.tagName == "SPAN"
+  else
+    toMinus = 0
+    for childNode in rootNode.childNodes
+      [retNod, retOff] = nodeAndOffsetFromCursorLocation(cursorLocation, childNode)
+      if retOff and !retNod
+        cursorLocation -= retOff
+        toMinus += retOff
+      else if retOff and retNod
+        return [retNod, retOff]
+  [null, toMinus]
+
+saveCursorLocation = (jObject) ->
+  plainObject = jObject[0]
+  return if document.activeElement != plainObject
+  sel = window.getSelection()
+  return unless sel.isCollapsed
+  anchorNode = sel.anchorNode
+  anchorOffset = sel.anchorOffset
+  return unless plainObject.contains(anchorNode)
+  cursorLo = cursorLocationFromNodeAndOffset(plainObject, anchorNode, anchorOffset)
+  console.log("CursorLo: #{cursorLo}")
+  jObject.data("cursorlocation", cursorLo)
+
+
+restoreCursorLocation = (jObject) ->
+  plainObject = jObject[0]
+  return if document.activeElement != plainObject
+  sel = window.getSelection()
+  return unless sel.isCollapsed
+  # return unless plainObject.contains(sel.anchorNode)
+  [anchorNode, anchorOffset] = nodeAndOffsetFromCursorLocation(jObject.data("cursorlocation"), plainObject)
+  console.log(anchorNode)
+  console.log(anchorOffset)
+  if anchorNode && anchorOffset >= 0
+    sel.collapse(anchorNode, anchorOffset)
 
 $.fn.colorfy = (plainTextProcessor) ->
 
@@ -155,6 +219,9 @@ $.fn.colorfy = (plainTextProcessor) ->
     else
       div.css("display", "inline-block")
     div.html(dataTextToFormattedText(div.data("content")))
+    restoreCursorLocation(div)
+    return
+
   div.on "send-content", ->
     # Fix big cursor issue
     if div.text().length == 0
@@ -164,6 +231,7 @@ $.fn.colorfy = (plainTextProcessor) ->
     area.val(div.data("content"))
 
   div.on "keyup paste", ->
+    saveCursorLocation(div)
     div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
 
 
