@@ -2,6 +2,7 @@
 #
 # For the Japanese / Chinese input method issue
 # http://stackoverflow.com/questions/1391278/contenteditable-change-events
+# https://github.com/makesites/jquery-contenteditable
 #
 # For the cursor issue
 # ;(
@@ -90,7 +91,6 @@ createNode = (content, htmlfier, descriptor, klass) ->
         newNode = createNode(remainder, @htmlfier, @descriptor.slice(0), null)
         @subnodes.push(newNode)
     node.processed = true
-
   return node
 
 htmlfy = (dataText) ->
@@ -101,7 +101,8 @@ htmlfy = (dataText) ->
   dataText = dataText.replace(/'/g, '&apos;')   # ' -> &apos;
   dataText = dataText.replace(/\//g, '&#x2F;')  # / -> &#x2F;
   dataText = dataText.replace(/\n/g, '<br>')    # \n -> <br>
-  dataText = dataText.replace(/ /g, '&nbsp;')   # ' ' -> &nbsp;
+  # Coffee cannot compile if use literal '/ /g'
+  dataText = dataText.replace(new RegExp(' ', 'g'), '&nbsp;')   # ' ' -> &nbsp;
   return dataText
 
 colorfy = (dataText, descriptor, htmlfier) ->
@@ -125,27 +126,36 @@ formattedTextToDataText = (formattedText) ->
   formattedText = formattedText.replace(/&nbsp;/g, ' ')           # &nbsp; -> ' '
   return formattedText
 
-cursorLocationFromNodeAndOffset = (rootNode, anchorNode, anchorOffset) ->
-  location = 0
-  if rootNode == anchorNode
-    if rootNode.nodeType == Node.TEXT_NODE
-      location += anchorOffset
-    else if rootNode.tagName == "SPAN"
-      for i in [0..anchorOffset] by 1
-        location += cursorLocationFromNodeAndOffset(rootNode.childNodes[i], anchorNode, anchorOffset)
-  else
-    if rootNode.nodeType == Node.TEXT_NODE
-      location += rootNode.nodeValue.length
-    else if rootNode.tagName == "BR"
-      location += 1
-    else
-      for childNode in rootNode.childNodes
-        if childNode == anchorNode
-          location += cursorLocationFromNodeAndOffset(childNode, anchorNode, anchorOffset)
-          return location
-        else
-          location += cursorLocationFromNodeAndOffset(childNode, anchorNode, anchorOffset)
-  return location
+# Common ancestor of two nodes, algorithm from
+# http://stackoverflow.com/questions/3960843/how-to-find-the-nearest-common-ancestors-of-two-or-more-nodes
+parentsOfNode = (node) ->
+  nodes = [node]
+  while node = node.parentNode
+    nodes.unshift(node)
+  return nodes
+
+commonAncestorOfTwoNodes = (node1, node2) ->
+  parents1 = parentsOfNode(node1)
+  parents2 = parentsOfNode(node2)
+  return null if parents1[0] != parents2[0]
+  for i in [0...parents1.length] by 1
+    if parents1[i] != parents2[i]
+      return parents1[i - 1]
+
+cursorLocationForRootNodeFromAnchorNodeAndOffset = (rootNode, anchorNode, anchorOffset, currentNode) ->
+  if !currentNode
+    currentNode = rootNode
+  if currentNode == anchorNode
+    return lengthOfNodeToOffset(anchorNode, anchorOffset)
+  else if !currentNode.contains(anchorNode) && rootNode.contains(commonAncestorOfTwoNodes(currentNode, anchorNode)) && (currentNode.compareDocumentPosition(anchorNode) == Node.DOCUMENT_POSITION_FOLLOWING) # if currentNode is before anchorNode
+    return lengthOfNode(currentNode)
+  else if !currentNode.contains(anchorNode) && rootNode.contains(commonAncestorOfTwoNodes(currentNode, anchorNode)) && (currentNode.compareDocumentPosition(anchorNode) == Node.DOCUMENT_POSITION_PRECEDING) # If rootNode is after anchor node, not make sence
+    return 0
+  else if currentNode.contains(anchorNode)
+    location = 0
+    for childNode in currentNode.childNodes
+      location += cursorLocationForRootNodeFromAnchorNodeAndOffset(rootNode, anchorNode, anchorOffset, childNode)
+    return location
 
 lengthOfNode = (node) ->
   if node.nodeType == Node.TEXT_NODE
@@ -156,6 +166,19 @@ lengthOfNode = (node) ->
     length = 0
     for childNode in node.childNodes
       length += lengthOfNode(childNode)
+    return length
+
+lengthOfNodeToOffset = (node, offset) ->
+  if node.nodeType == Node.TEXT_NODE
+    return offset
+  else if node.tagName == "BR"
+    # Hope this never happens
+    console.log("Is this correct behavior?")
+    return offset
+  else if (node.tagName == "SPAN") || (node.tagName == "DIV")
+    length = 0
+    for i in [0...offset] by 1
+      length += lengthOfNode(node.childNodes[i])
     return length
 
 nodeAndOffsetFromCursorLocation = (location, node) ->
@@ -179,8 +202,8 @@ saveCursorLocation = (jObject) ->
   anchorNode = sel.anchorNode
   anchorOffset = sel.anchorOffset
   return unless plainObject.contains(anchorNode)
-  cursorLo = cursorLocationFromNodeAndOffset(plainObject, anchorNode, anchorOffset)
-  console.log("CursorLo: #{cursorLo}")
+  cursorLo = cursorLocationForRootNodeFromAnchorNodeAndOffset(plainObject, anchorNode, anchorOffset)
+#  cursorLo = cursorLocationFromNodeAndOffset(plainObject, anchorNode, anchorOffset)
   jObject.data("cursorlocation", cursorLo)
 
 
@@ -191,8 +214,6 @@ restoreCursorLocation = (jObject) ->
   return unless sel.isCollapsed
   # return unless plainObject.contains(sel.anchorNode)
   [anchorNode, anchorOffset] = nodeAndOffsetFromCursorLocation(jObject.data("cursorlocation"), plainObject)
-  console.log(anchorNode)
-  console.log(anchorOffset)
   if anchorNode && anchorOffset >= 0
     sel.collapse(anchorNode, anchorOffset)
 
@@ -214,7 +235,7 @@ $.fn.colorfy = (plainTextProcessor) ->
   # Insert the fake text area
   this.after(div)
   # Hide the original and real one
-  this.css("display", "none")
+  # this.css("display", "none")
 
   # Event Binding
   # to keep form and fake div in sync
