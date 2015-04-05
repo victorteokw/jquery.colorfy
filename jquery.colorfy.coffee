@@ -36,6 +36,13 @@ markdownSyntaxDescriptor =
   # inline image
   # reference image
 
+isOldIE = () ->
+  ua = window.navigator.userAgent
+  if ua.indexOf("MSIE ") > 0
+    true
+  else
+    false
+
 objectToAssociativeArray = (obj) ->
   return obj if Array.isArray(obj)
   retArr = []
@@ -218,7 +225,8 @@ restoreCursorLocation = (jObject) ->
     sel.collapse(anchorNode, anchorOffset)
 
 $.fn.colorfy = (plainTextProcessor) ->
-
+  # Do not support old IE
+  return if isOldIE()
   # Create fake text area
   # which is actually a 'contenteditable' div
   div = $("<div></div>")
@@ -235,7 +243,7 @@ $.fn.colorfy = (plainTextProcessor) ->
   # Insert the fake text area
   this.after(div)
   # Hide the original and real one
-  # this.css("display", "none")
+  this.css("display", "none")
 
   # Event Binding
   # to keep form and fake div in sync
