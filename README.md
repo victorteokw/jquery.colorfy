@@ -8,7 +8,7 @@ It's available on npm and bower.
 $("#your_text_area").colorfy(optionalDescriptor);
 ```
 The descriptor is an object like this
-```
+``` javaScript
 descriptor = {
   "keyword": /function|typeof|instanceof|var/,
   "operator": /[+-*/%]/,
