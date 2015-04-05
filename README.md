@@ -19,7 +19,7 @@ Left hand side, aka key, is css classname.
 Right hand side, aka value, is regexp to match.
 
 ## Known Bugs
-It only works well in Safari.
-In Chrome when user is press enter/return.
-Due to system input method, Chinese and Japanese are not supported.
+* It only works well in Safari.
+* In Chrome when user is press enter/return.
+* Due to system input method, Chinese and Japanese are not supported.
 
