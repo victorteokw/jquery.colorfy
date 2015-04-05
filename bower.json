@@ -1,0 +1,13 @@
+{
+    "name": "jquery-colorfy",
+    "version": "0.0.1",
+    "main": "jquery.colorfy.js",
+    "author": "Zhang Kai Yu",
+    "dependencies": {
+        "jquery": ">=1.5"
+    },
+    "ignore": [
+        "README.md",
+        "package.json"
+    ]
+}

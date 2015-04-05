@@ -1,0 +1,45 @@
+{
+    "name": "jquery-colorfy",
+    "title": "jQuery Text Area Color Plugin",
+    "description": "A simple way to add color attribute to text area.",
+    "keywords": [
+        "jquery-plugin",
+        "input",
+        "text",
+        "form",
+        "editor"
+    ],
+    "version": "0.0.1",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/cheunghy/jquery.colorfy/issues"
+    },
+    "author": {
+        "name": "Zhang Kai Yu",
+        "url": "http://www.cheunghoiyu.com",
+        "email": "yeannylam@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cheunghy/jquery.colorfy"
+    },
+    "homepage": "https://github.com/cheunghy/jquery.colorfy",
+    "dependencies": {
+        "jquery": ">=1.5"
+    },
+    "jam": {
+        "main": "jquery.colorfy.js",
+        "dependencies": {
+            "jquery": ">=1.5.0"
+        }
+    },
+    "devDependencies": {
+        "coffee-script": ">=1.8 <2.0",
+        "gulp": "~3.8",
+        "gulp-util": "~2.2",
+        "gulp-uglify": "~0.2",
+        "gulp-concat": "~2.1",
+        "gulp-jshint": "~1.10",
+        "gulp-coffee": "~2.3.1"
+    }
+}
