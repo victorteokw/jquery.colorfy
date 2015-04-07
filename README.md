@@ -1,5 +1,5 @@
 # jquery.colorfy
-jQuery plugin that colorfies your textarea
+jQuery plugin that colorfies your textarea.
 
 It's available on npm and bower.
 
@@ -15,11 +15,11 @@ descriptor = {
   "string": /(["']).*+\1/m
 }
 ```
-Left hand side, aka key, is css classname.
+Left hand side, aka key, is css class name.
 Right hand side, aka value, is regexp to match.
 
 ## Known Bugs
 * It only works well in Safari.
-* In Chrome when user is press enter/return.
+* In Chrome when user press enter/return, cursor jumps incorrectly.
 * Due to system input method, Chinese and Japanese are not supported.
 
