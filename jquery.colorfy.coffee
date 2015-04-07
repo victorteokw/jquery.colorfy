@@ -23,8 +23,8 @@ markdownSyntaxDescriptor =
   "strong":        /([\*_]{2})[^\*_]+?\1/m
   "emphasis":      /([\*_])[^\*_]+?\1(?![\*_])/m
   "strikethrough": /~~.+?~~/m
+  "codeblock":     /```[a-z\s]*\n[\s\S]*?\n```/m
   "inlinecode":    /`[^`\n]+?`/
-  "codeblock":     /```[.\n]+?```/m
 #  "codeblock":     [/```.+?```/m, /^(?: {4}|\t).+$/m]
   "rule":          /^[-\*]{3,}/m
   # "table":
