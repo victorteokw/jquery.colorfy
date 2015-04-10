@@ -19,7 +19,6 @@ Left hand side, aka key, is css class name.
 Right hand side, aka value, is regexp to match.
 
 ## Known Bugs
-* It only works well in Safari.
-* In Chrome when user press enter/return, cursor jumps incorrectly.
+* It only works well in Safari and Chrome.
+* In Firefox when user press enter/return, cursor jumps incorrectly.
 * Due to system input method, Chinese and Japanese are not supported.
-

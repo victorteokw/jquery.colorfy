@@ -50,6 +50,13 @@ isChrome = () ->
   else
     false
 
+isFirefox = () ->
+  ua = window.navigator.userAgent
+  if ua.indexOf("Firefox") > 0
+    true
+  else
+    false
+
 objectToAssociativeArray = (obj) ->
   return obj if Array.isArray(obj)
   retArr = []
@@ -202,6 +209,11 @@ nodeAndOffsetFromCursorLocation = (location, node) ->
   else if node.tagName == "BR"
     if isChrome()
       return [node.nextSibling, 0]
+    else if isFirefox()
+      if node.nextSibling.tagName == "BR"
+        return [node.nextSibling, 0]
+      else
+        return [node, 0]
     else
       return [node, location]
   else

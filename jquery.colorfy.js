@@ -1,5 +1,5 @@
 (function() {
-  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isOldIE, lengthOfNode, lengthOfNodeToOffset, markdownSyntaxDescriptor, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
+  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, markdownSyntaxDescriptor, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
 
   markdownSyntaxDescriptor = {
     "title": /^\s{0,3}\#{1,6}.*$/m,
@@ -28,6 +28,16 @@
     var ua;
     ua = window.navigator.userAgent;
     if (ua.indexOf("Chrome") > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  isFirefox = function() {
+    var ua;
+    ua = window.navigator.userAgent;
+    if (ua.indexOf("Firefox") > 0) {
       return true;
     } else {
       return false;
@@ -236,6 +246,12 @@
     } else if (node.tagName === "BR") {
       if (isChrome()) {
         return [node.nextSibling, 0];
+      } else if (isFirefox()) {
+        if (node.nextSibling.tagName === "BR") {
+          return [node.nextSibling, 0];
+        } else {
+          return [node, 0];
+        }
       } else {
         return [node, location];
       }
