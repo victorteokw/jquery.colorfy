@@ -1,7 +1,12 @@
 # jquery.colorfy
 jQuery plugin that colorfies your textarea.
-
+=> [Online demo and homepage](http://cheunghy.github.io/jquery.colorfy/)
 It's available on npm and bower.
+
+## Screencast
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=b1Lu_qKrLZ0
+" target="_blank"><img src="http://img.youtube.com/vi/b1Lu_qKrLZ0/0.jpg" 
+alt="Screencast" width="240" height="180" border="10" /></a>
 
 ## Usage
 ``` javaScript
