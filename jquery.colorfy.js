@@ -1,5 +1,5 @@
 (function() {
-  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isOldIE, lengthOfNode, lengthOfNodeToOffset, markdownSyntaxDescriptor, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
+  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isOldIE, lengthOfNode, lengthOfNodeToOffset, markdownSyntaxDescriptor, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
 
   markdownSyntaxDescriptor = {
     "title": /^\s{0,3}\#{1,6}.*$/m,
@@ -18,6 +18,16 @@
     var ua;
     ua = window.navigator.userAgent;
     if (ua.indexOf("MSIE ") > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  isChrome = function() {
+    var ua;
+    ua = window.navigator.userAgent;
+    if (ua.indexOf("Chrome") > 0) {
       return true;
     } else {
       return false;
@@ -224,7 +234,11 @@
     if (node.nodeType === Node.TEXT_NODE) {
       return [node, location];
     } else if (node.tagName === "BR") {
-      return [node, location];
+      if (isChrome()) {
+        return [node.nextSibling, 0];
+      } else {
+        return [node, location];
+      }
     } else {
       ref = node.childNodes;
       for (j = 0, len = ref.length; j < len; j++) {

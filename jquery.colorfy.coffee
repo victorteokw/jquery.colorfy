@@ -43,6 +43,13 @@ isOldIE = () ->
   else
     false
 
+isChrome = () ->
+  ua = window.navigator.userAgent
+  if ua.indexOf("Chrome") > 0
+    true
+  else
+    false
+
 objectToAssociativeArray = (obj) ->
   return obj if Array.isArray(obj)
   retArr = []
@@ -193,7 +200,10 @@ nodeAndOffsetFromCursorLocation = (location, node) ->
   if node.nodeType == Node.TEXT_NODE
     return [node, location]
   else if node.tagName == "BR"
-    return [node, location]
+    if isChrome()
+      return [node.nextSibling, 0]
+    else
+      return [node, location]
   else
     for childNode in node.childNodes
       if lengthOfNode(childNode) < location
