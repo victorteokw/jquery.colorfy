@@ -7,16 +7,16 @@ It's available on npm and bower.
 
 ## Screencast
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=b1Lu_qKrLZ0
-" target="_blank"><img src="http://img.youtube.com/vi/b1Lu_qKrLZ0/0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/b1Lu_qKrLZ0/0.jpg"
 alt="Screencast" width="240" height="180" border="10" /></a>
 
 ## Usage
-``` javaScript
-$("#your_text_area").colorfy(optionalDescriptor);
+``` javascript
+$("#your_text_area").colorfy("yourDescriptor");
 ```
-The descriptor is an object like this
-``` javaScript
-descriptor = {
+The descriptor can be registered like this
+``` javascript
+$.fn.colorfy.yourDescriptor = {
   "keyword": /function|typeof|instanceof|var/,
   "operator": /[+-*/%]/,
   "string": /(["']).*+\1/m
