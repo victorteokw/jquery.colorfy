@@ -7,35 +7,6 @@
 # For the cursor issue
 # ;(
 
-# simple markdown parser rules
-# /[.+](.+)/g -> inline link
-# /[.+][.+]/g -> reference link
-# /[.+]/g -> abbr link !BUG
-# /[.+]: .+/g -> link or image reference
-# //g -> inline image
-# //g -> reference image
-markdownSyntaxDescriptor =
-#  "title":         [/^\s{0,3}\#{1,6}.*$/m, /^.+?\n[=-]{2,}\s*$/m]
-  "title":         /^\s{0,3}\#{1,6}.*$/m
-  "block":         /^\s{0,3}>\s+.*$/m
-  "orderedlist":   /^\s*[0-9]+\. .+$/m
-  "unorderedlist": /^\s*[*+-] .+$/m
-  "strong":        /([\*_]{2})[^\*_]+?\1/m
-  "emphasis":      /([\*_])[^\*_]+?\1(?![\*_])/m
-  "strikethrough": /~~.+?~~/m
-  "codeblock":     /```[a-z\s]*\n[\s\S]*?\n```/m
-  "inlinecode":    /`[^`\n]+?`/
-#  "codeblock":     [/```.+?```/m, /^(?: {4}|\t).+$/m]
-  "rule":          /^[-\*]{3,}/m
-  # "table":
-  # "inlinehtml"
-  # inline link
-  # reference link
-  # abbr link
-  # link or image reference
-  # inline image
-  # reference image
-
 isOldIE = () ->
   ua = window.navigator.userAgent
   if ua.indexOf("MSIE ") > 0
@@ -131,9 +102,8 @@ colorfy = (dataText, descriptor, htmlfier) ->
   node = createNode(dataText, htmlfier, descriptor, 'markdown')
   return node.toHTML()
 
-
-dataTextToFormattedText = (dataText) ->
-  colorfy(dataText, markdownSyntaxDescriptor, htmlfy)
+dataTextToFormattedText = (dataText, syntaxDescriptor) ->
+  colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy)
 
 formattedTextToDataText = (formattedText) ->
   formattedText = formattedText.replace(/<(?!br|\/br).+?>/gm, '') # strip tags
@@ -246,7 +216,7 @@ restoreCursorLocation = (jObject) ->
   if anchorNode && anchorOffset >= 0
     sel.collapse(anchorNode, anchorOffset)
 
-$.fn.colorfy = (plainTextProcessor) ->
+$.fn.colorfy = (syntaxDescriptor) ->
   # Do not support old IE
   return if isOldIE()
   # Create fake text area
@@ -279,7 +249,7 @@ $.fn.colorfy = (plainTextProcessor) ->
       div.css("display", "block")
     else
       div.css("display", "inline-block")
-    div.html(dataTextToFormattedText(div.data("content")))
+    div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor))
     restoreCursorLocation(div)
     return
 

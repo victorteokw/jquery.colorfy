@@ -1,18 +1,5 @@
 (function() {
-  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, markdownSyntaxDescriptor, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
-
-  markdownSyntaxDescriptor = {
-    "title": /^\s{0,3}\#{1,6}.*$/m,
-    "block": /^\s{0,3}>\s+.*$/m,
-    "orderedlist": /^\s*[0-9]+\. .+$/m,
-    "unorderedlist": /^\s*[*+-] .+$/m,
-    "strong": /([\*_]{2})[^\*_]+?\1/m,
-    "emphasis": /([\*_])[^\*_]+?\1(?![\*_])/m,
-    "strikethrough": /~~.+?~~/m,
-    "codeblock": /```[a-z\s]*\n[\s\S]*?\n```/m,
-    "inlinecode": /`[^`\n]+?`/,
-    "rule": /^[-\*]{3,}/m
-  };
+  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
 
   isOldIE = function() {
     var ua;
@@ -141,8 +128,8 @@
     return node.toHTML();
   };
 
-  dataTextToFormattedText = function(dataText) {
-    return colorfy(dataText, markdownSyntaxDescriptor, htmlfy);
+  dataTextToFormattedText = function(dataText, syntaxDescriptor) {
+    return colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy);
   };
 
   formattedTextToDataText = function(formattedText) {
@@ -303,7 +290,7 @@
     }
   };
 
-  $.fn.colorfy = function(plainTextProcessor) {
+  $.fn.colorfy = function(syntaxDescriptor) {
     var area, div;
     if (isOldIE()) {
       return;
@@ -326,7 +313,7 @@
       } else {
         div.css("display", "inline-block");
       }
-      div.html(dataTextToFormattedText(div.data("content")));
+      div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor));
       restoreCursorLocation(div);
     });
     div.on("send-content", function() {
