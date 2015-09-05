@@ -5,19 +5,43 @@
      body {
        text-align: center;
      }
+     .input {
+       float: auto;
+       margin-left: auto;
+       margin-right: auto;
+       padding-left: 8px;
+       padding-right: 8px;
+       padding-top: 3px;
+       width: 600px;
+       height: 32px;
+       max-width: 600px;
+       border-color: black;
+       border-width: 2px;
+       border-style: solid;
+       font-size: 20px;
+       text-align: left;
+       outline: none;
+     }
      .area {
        float: auto;
        margin-left: auto;
        margin-right: auto;
+       padding: 8px;
        width: 600px;
        max-width: 600px;
        height: 400px;
        border-color: black;
        border-width: 2px;
        border-style: solid;
-       padding: 8px;
        font-size: 15px;
        text-align: left;
+       outline: none;
+     }
+     .money .currency {
+       color: red;
+     }
+     .money .number {
+       color: green;
      }
      .markdown .title {
        color: red;
@@ -50,11 +74,18 @@
     <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="jquery.colorfy.js"></script>
     <script type="text/javascript" src="jquery.colorfy.markdown.js"></script>
+    <script type="text/javascript">
+     $.fn.colorfy.money = {
+       "currency": /\$/m,
+       "number": /[0-9.]+/m
+     };
+    </script>
   </head>
   <body>
     <h1>jQuery Colorfy</h1>
     <p>Please write some markdown and try for yourself!</p>
     <p>It works on newest Safari and Chrome!</p>
+    <p><strong>textarea example</strong></p>
     <textarea id="area" class="area">
 Please try for your self
 # This is title
@@ -74,10 +105,14 @@ You can customize the style through a very simple `css` like this
        color: silver;
      }
 ```</textarea>
+    <p><strong>input example</strong></p>
+    <input id="input" class="input" value="price $9.99"></input>
+
     <p><a href="https://github.com/cheunghy/jquery.colorfy">Fork me on github</a></p>
 
     <script type="text/javascript">
-      $('#area').colorfy("markdown");
+     $('#area').colorfy("markdown");
+     $('#input').colorfy("money");
     </script>
   </body>
 </html>

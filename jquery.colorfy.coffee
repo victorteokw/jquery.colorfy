@@ -97,13 +97,13 @@ htmlfy = (dataText) ->
   dataText = dataText.replace(new RegExp(' ', 'g'), '&nbsp;')   # ' ' -> &nbsp;
   return dataText
 
-colorfy = (dataText, descriptor, htmlfier) ->
+colorfy = (dataText, descriptor, htmlfier, descriptorName) ->
   htmlfier ||= htmlfy
-  node = createNode(dataText, htmlfier, descriptor, 'markdown')
+  node = createNode(dataText, htmlfier, descriptor, descriptorName)
   return node.toHTML()
 
 dataTextToFormattedText = (dataText, syntaxDescriptor) ->
-  colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy)
+  colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy, syntaxDescriptor)
 
 formattedTextToDataText = (formattedText) ->
   formattedText = formattedText.replace(/<(?!br|\/br).+?>/gm, '') # strip tags

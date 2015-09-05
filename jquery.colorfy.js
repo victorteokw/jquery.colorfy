@@ -121,15 +121,15 @@
     return dataText;
   };
 
-  colorfy = function(dataText, descriptor, htmlfier) {
+  colorfy = function(dataText, descriptor, htmlfier, descriptorName) {
     var node;
     htmlfier || (htmlfier = htmlfy);
-    node = createNode(dataText, htmlfier, descriptor, 'markdown');
+    node = createNode(dataText, htmlfier, descriptor, descriptorName);
     return node.toHTML();
   };
 
   dataTextToFormattedText = function(dataText, syntaxDescriptor) {
-    return colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy);
+    return colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy, syntaxDescriptor);
   };
 
   formattedTextToDataText = function(formattedText) {
