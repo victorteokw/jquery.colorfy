@@ -219,57 +219,60 @@ restoreCursorLocation = (jObject) ->
 $.fn.colorfy = (syntaxDescriptor) ->
   # Do not support old IE
   return if isOldIE()
-  # Create fake text area
-  # which is actually a 'contenteditable' div
-  div = $("<div></div>")
-  div.attr("contenteditable", "true")
-  # Copy style
-  div.attr("class", this.attr("class"))
-  # Prevent content to overflow to the outside
-  div.css("max-height", this.height())
-  div.css("height", this.height())
 
-  if this.prop("tagName") == "input"
-    div.css("overflow", "hidden")
-  else
-    div.css("overflow", "scroll")
+  this.each ->
+    $this = $(this)
+    # Create fake text area
+    # which is actually a 'contenteditable' div
+    div = $("<div></div>")
+    div.attr("contenteditable", "true")
+    # Copy style
+    div.attr("class", $this.attr("class"))
+    # Prevent content to overflow to the outside
+    div.css("max-height", $this.height())
+    div.css("height", $this.height())
 
-  # Prevent enter to insert <div></div>
-  # See http://stackoverflow.com/questions/18552336/prevent-contenteditable-adding-div-on-enter-chrome
-  # div.css("display", 'inline-block')
-  # Insert the fake text area
-  this.after(div)
-  # Hide the original and real one
-  this.css("display", "none")
-
-  # Event Binding
-  # to keep form and fake div in sync
-  area = this
-  area.on "keyup paste", (e) ->
-    div.data("content", area.val()).trigger("receive-content")
-
-  div.on "receive-content", (e) ->
-    # Fix big cursor issue
-    if div.text().length == 0
-      div.css("display", "block")
+    if $this.prop("tagName") == "input"
+      div.css("overflow", "hidden")
     else
-      div.css("display", "inline-block")
-    div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor))
-    restoreCursorLocation(div)
-    return
+      div.css("overflow", "scroll")
 
-  div.on "send-content", (e) ->
-    # Fix big cursor issue
-    if div.text().length == 0
-      div.css("display", "block")
-    else
-      div.css("display", "inline-block")
-    area.val(div.data("content"))
+    # Prevent enter to insert <div></div>
+    # See http://stackoverflow.com/questions/18552336/prevent-contenteditable-adding-div-on-enter-chrome
+    # div.css("display", 'inline-block')
+    # Insert the fake text area
+    $this.after(div)
+    # Hide the original and real one
+    $this.css("display", "none")
 
-  div.on "input paste", (e) ->
-    saveCursorLocation(div)
-    div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
+    # Event Binding
+    # to keep form and fake div in sync
+    area = $this
+    area.on "keyup paste", (e) ->
+      div.data("content", area.val()).trigger("receive-content")
+
+    div.on "receive-content", (e) ->
+      # Fix big cursor issue
+      if div.text().length == 0
+        div.css("display", "block")
+      else
+        div.css("display", "inline-block")
+      div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor))
+      restoreCursorLocation(div)
+      return
+
+    div.on "send-content", (e) ->
+      # Fix big cursor issue
+      if div.text().length == 0
+        div.css("display", "block")
+      else
+        div.css("display", "inline-block")
+      area.val(div.data("content"))
+
+    div.on "input paste", (e) ->
+      saveCursorLocation(div)
+      div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
 
 
-  # Initialize content
-  div.data("content", this.val()).trigger("receive-content")
+    # Initialize content
+    div.data("content", $this.val()).trigger("receive-content")
