@@ -7,6 +7,8 @@
 # For the cursor issue
 # ;(
 
+# shouldUpdate = false
+
 isOldIE = () ->
   ua = window.navigator.userAgent
   if ua.indexOf("MSIE ") > 0
@@ -248,7 +250,7 @@ $.fn.colorfy = (syntaxDescriptor) ->
     # Event Binding
     # to keep form and fake div in sync
     area = $this
-    area.on "keyup paste", (e) ->
+    area.on "keyup paste change", (e) ->
       div.data("content", area.val()).trigger("receive-content")
 
     div.on "receive-content", (e) ->
@@ -269,9 +271,16 @@ $.fn.colorfy = (syntaxDescriptor) ->
         div.css("display", "inline-block")
       area.val(div.data("content"))
 
+    # div.on "keypress", (e) ->
+    #   shouldUpdate = true
+    #   return
+
     div.on "input paste", (e) ->
-      saveCursorLocation(div)
-      div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
+      if true
+        saveCursorLocation(div)
+        div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
+      # shouldUpdate = false
+      return
 
 
     # Initialize content

@@ -310,7 +310,7 @@
       $this.after(div);
       $this.css("display", "none");
       area = $this;
-      area.on("keyup paste", function(e) {
+      area.on("keyup paste change", function(e) {
         return div.data("content", area.val()).trigger("receive-content");
       });
       div.on("receive-content", function(e) {
@@ -331,8 +331,10 @@
         return area.val(div.data("content"));
       });
       div.on("input paste", function(e) {
-        saveCursorLocation(div);
-        return div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content");
+        if (true) {
+          saveCursorLocation(div);
+          div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content");
+        }
       });
       return div.data("content", $this.val()).trigger("receive-content");
     });
