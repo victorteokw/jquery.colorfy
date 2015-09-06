@@ -9,6 +9,8 @@
 
 # shouldUpdate = false
 
+colorfyTriggersChange = false
+
 isOldIE = () ->
   ua = window.navigator.userAgent
   if ua.indexOf("MSIE ") > 0
@@ -250,8 +252,10 @@ $.fn.colorfy = (syntaxDescriptor) ->
     # Event Binding
     # to keep form and fake div in sync
     area = $this
-    area.on "keyup paste change", (e) ->
-      div.data("content", area.val()).trigger("receive-content")
+    area.on "keyup paste change input", (e) ->
+      unless colorfyTriggersChange
+        div.data("content", area.val()).trigger("receive-content")
+      colorfyTriggersChange = false
 
     div.on "receive-content", (e) ->
       # Fix big cursor issue
@@ -269,7 +273,9 @@ $.fn.colorfy = (syntaxDescriptor) ->
         div.css("display", "block")
       else
         div.css("display", "inline-block")
-      area.val(div.data("content"))
+      colorfyTriggersChange = true
+      area.val(div.data("content")).trigger("change")
+
 
     # div.on "keypress", (e) ->
     #   shouldUpdate = true

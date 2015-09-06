@@ -1,5 +1,7 @@
 (function() {
-  var colorfy, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
+  var colorfy, colorfyTriggersChange, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
+
+  colorfyTriggersChange = false;
 
   isOldIE = function() {
     var ua;
@@ -310,8 +312,11 @@
       $this.after(div);
       $this.css("display", "none");
       area = $this;
-      area.on("keyup paste change", function(e) {
-        return div.data("content", area.val()).trigger("receive-content");
+      area.on("keyup paste change input", function(e) {
+        if (!colorfyTriggersChange) {
+          div.data("content", area.val()).trigger("receive-content");
+        }
+        return colorfyTriggersChange = false;
       });
       div.on("receive-content", function(e) {
         if (div.text().length === 0) {
@@ -328,7 +333,8 @@
         } else {
           div.css("display", "inline-block");
         }
-        return area.val(div.data("content"));
+        colorfyTriggersChange = true;
+        return area.val(div.data("content")).trigger("change");
       });
       div.on("input paste", function(e) {
         if (true) {
