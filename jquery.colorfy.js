@@ -300,14 +300,18 @@
     div.attr("class", this.attr("class"));
     div.css("max-height", this.height());
     div.css("height", this.height());
-    div.css("overflow", "scroll");
+    if (this.prop("tagName") === "input") {
+      div.css("overflow", "hidden");
+    } else {
+      div.css("overflow", "scroll");
+    }
     this.after(div);
     this.css("display", "none");
     area = this;
-    area.on("keyup paste", function() {
+    area.on("keyup paste", function(e) {
       return div.data("content", area.val()).trigger("receive-content");
     });
-    div.on("receive-content", function() {
+    div.on("receive-content", function(e) {
       if (div.text().length === 0) {
         div.css("display", "block");
       } else {
@@ -316,7 +320,7 @@
       div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor));
       restoreCursorLocation(div);
     });
-    div.on("send-content", function() {
+    div.on("send-content", function(e) {
       if (div.text().length === 0) {
         div.css("display", "block");
       } else {
@@ -324,7 +328,7 @@
       }
       return area.val(div.data("content"));
     });
-    div.on("input paste", function() {
+    div.on("input paste", function(e) {
       saveCursorLocation(div);
       return div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content");
     });

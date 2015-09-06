@@ -228,7 +228,12 @@ $.fn.colorfy = (syntaxDescriptor) ->
   # Prevent content to overflow to the outside
   div.css("max-height", this.height())
   div.css("height", this.height())
-  div.css("overflow", "scroll")
+
+  if this.prop("tagName") == "input"
+    div.css("overflow", "hidden")
+  else
+    div.css("overflow", "scroll")
+
   # Prevent enter to insert <div></div>
   # See http://stackoverflow.com/questions/18552336/prevent-contenteditable-adding-div-on-enter-chrome
   # div.css("display", 'inline-block')
@@ -240,10 +245,10 @@ $.fn.colorfy = (syntaxDescriptor) ->
   # Event Binding
   # to keep form and fake div in sync
   area = this
-  area.on "keyup paste", ->
+  area.on "keyup paste", (e) ->
     div.data("content", area.val()).trigger("receive-content")
 
-  div.on "receive-content", ->
+  div.on "receive-content", (e) ->
     # Fix big cursor issue
     if div.text().length == 0
       div.css("display", "block")
@@ -253,7 +258,7 @@ $.fn.colorfy = (syntaxDescriptor) ->
     restoreCursorLocation(div)
     return
 
-  div.on "send-content", ->
+  div.on "send-content", (e) ->
     # Fix big cursor issue
     if div.text().length == 0
       div.css("display", "block")
@@ -261,7 +266,7 @@ $.fn.colorfy = (syntaxDescriptor) ->
       div.css("display", "inline-block")
     area.val(div.data("content"))
 
-  div.on "input paste", ->
+  div.on "input paste", (e) ->
     saveCursorLocation(div)
     div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content")
 
