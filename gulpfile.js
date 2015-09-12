@@ -21,7 +21,7 @@ gulp.task('minify', ['dist'], function() {
 });
 
 gulp.task('dist', function() {
-  ['jquery.colorfy.es6'].forEach(function(fileName){
+  ['jquery.colorfy.es6', 'jquery.colorfy.markdown.es6'].forEach(function(fileName){
     gulp.src(fileName)
       .pipe(babel())
       .pipe(gulp.dest('.'));
