@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title></title>
+    <meta charset="utf-8" />
+    <style type='text/css'>
+     .money .currency {
+       color: red;
+     }
+     .money .number {
+       color: green;
+     }
+     body{
+       text-align: center;
+     }
+     .l {
+       float: auto;
+       margin-left: auto;
+       margin-right: auto;
+       padding-left: 8px;
+       padding-right: 8px;
+       padding-top: 3px;
+       width: 600px;
+       height: 32px;
+       max-width: 600px;
+       border-color: black;
+       border-width: 2px;
+       border-style: solid;
+       font-size: 20px;
+       text-align: left;
+       outline: none;
+     }
+     .r {
+       float: auto;
+       margin-left: auto;
+       margin-right: auto;
+       padding-left: 8px;
+       padding-right: 8px;
+       padding-top: 3px;
+       width: 600px;
+       height: 32px;
+       max-width: 600px;
+       border-color: red;
+       border-width: 2px;
+       border-style: solid;
+       font-size: 20px;
+       text-align: left;
+       outline: none;
+     }
+
+    </style>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="jquery.colorfy.js"></script>
+    <script type="text/javascript">
+     $.fn.colorfy.money = {
+       "currency": /\$/m,
+       "number": /[0-9.]+/m
+     };
+    </script>
+  </head>
+  <body>
+    <input id="input" class="l" value="price $1.99"></input>
+    <input id="input" class="r" value="price $9.99"></input>
+    <script type="text/javascript">
+     $('input').colorfy("money");
+     $('input.l').on("change", function(){
+       $('input.r').val($('input.l').val()).trigger("change");
+       //var event = new Event("change");
+       //$('input.r')[0].dispatchEvent(event);
+     });
+    </script>
+  </body>
+</html>
