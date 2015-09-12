@@ -1,3 +1,4 @@
+/*global jQuery */
 "use strict";
 
 var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
@@ -164,8 +165,8 @@ var _colorfy = function _colorfy(text, descriptor, htmlfier, descriptorName) {
 
 var _colorfy2 = function _colorfy2(text, descriptorName) {
   var descriptor = undefined;
-  if ($) {
-    descriptor = $.fn.colorfy[descriptorName];
+  if (jQuery) {
+    descriptor = jQuery.fn.colorfy[descriptorName];
   } else {
     descriptor = syntaxDescriptors[descriptorName];
   }
@@ -261,7 +262,7 @@ var nodeAndOffset = function nodeAndOffset(_x2, _x3) {
           break;
         case "Firefox":
           if (node.nextSibling.tagname == "BR") {
-            return [node, nextSibling, 0];
+            return [node.nextSibling, 0];
           } else {
             return [node, 0];
           }
@@ -363,10 +364,15 @@ var Colorfy = (function () {
           fakeDiv.dispatchEvent(_event);
         }
       };
-      this.node.addEventListener("keyup", sendToFakeDiv);
-      this.node.addEventListener("paste", sendToFakeDiv);
-      this.node.addEventListener("change", sendToFakeDiv);
-      this.node.addEventListener("input", sendToFakeDiv);
+      if (jQuery) {
+        // jQuery bug #2476
+        jQuery(this.node).on("keyup paste change input", sendToFakeDiv);
+      } else {
+        this.node.addEventListener("keyup", sendToFakeDiv);
+        this.node.addEventListener("paste", sendToFakeDiv);
+        this.node.addEventListener("change", sendToFakeDiv);
+        this.node.addEventListener("input", sendToFakeDiv);
+      }
 
       var sendToArea = function sendToArea() {
         saveCursor(fakeDiv);
@@ -378,8 +384,12 @@ var Colorfy = (function () {
         event.initEvent("receive-content", true, true);
         fakeDiv.dispatchEvent(event);
       };
-      fakeDiv.addEventListener("input", sendToArea);
-      fakeDiv.addEventListener("paste", sendToArea);
+      if (jQuery) {
+        jQuery(fakeDiv).on("input paste", sendToArea);
+      } else {
+        fakeDiv.addEventListener("input", sendToArea);
+        fakeDiv.addEventListener("paste", sendToArea);
+      }
 
       fakeDiv.addEventListener("receive-content", function (e) {
         if (fakeDiv.innerText.length == 0) {
@@ -410,7 +420,7 @@ var Colorfy = (function () {
   return Colorfy;
 })();
 
-$.fn.colorfy = function (syntaxDescriptor) {
+jQuery.fn.colorfy = function (syntaxDescriptor) {
   this.each(function () {
     var colorfyObject = new Colorfy(this);
     colorfyObject.colorfy(syntaxDescriptor);

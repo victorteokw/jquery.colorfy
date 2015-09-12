@@ -1,3 +1,4 @@
+/*global jQuery */
 const thisBrowser = function() {
   const _ieP = window.navigator.userAgent.indexOf("MSIE ") > 0;
   const _chromeP = window.navigator.userAgent.indexOf("Chrome") > 0;
@@ -126,8 +127,8 @@ const _colorfy = function(text, descriptor, htmlfier, descriptorName) {
 
 const colorfy = function(text, descriptorName) {
   let descriptor;
-  if ($) {
-    descriptor = $.fn.colorfy[descriptorName];
+  if (jQuery) {
+    descriptor = jQuery.fn.colorfy[descriptorName];
   } else {
     descriptor = syntaxDescriptors[descriptorName];
   }
@@ -219,7 +220,7 @@ const nodeAndOffset = function(location, node) {
       break;
     case "Firefox":
       if (node.nextSibling.tagname == "BR") {
-        return [node, nextSibling, 0];
+        return [node.nextSibling, 0];
       } else {
         return [node, 0];
       }
@@ -303,10 +304,14 @@ const Colorfy = class {
         fakeDiv.dispatchEvent(event);
       }
     };
-    this.node.addEventListener("keyup", sendToFakeDiv);
-    this.node.addEventListener("paste", sendToFakeDiv);
-    this.node.addEventListener("change", sendToFakeDiv);
-    this.node.addEventListener("input", sendToFakeDiv);
+    if (jQuery) {                    // jQuery bug #2476
+      jQuery(this.node).on("keyup paste change input", sendToFakeDiv);
+    } else {
+      this.node.addEventListener("keyup", sendToFakeDiv);
+      this.node.addEventListener("paste", sendToFakeDiv);
+      this.node.addEventListener("change", sendToFakeDiv);
+      this.node.addEventListener("input", sendToFakeDiv);
+    }
 
     let sendToArea = function() {
       saveCursor(fakeDiv);
@@ -318,8 +323,12 @@ const Colorfy = class {
       event.initEvent("receive-content", true, true);
       fakeDiv.dispatchEvent(event);
     };
-    fakeDiv.addEventListener("input", sendToArea);
-    fakeDiv.addEventListener("paste", sendToArea);
+    if (jQuery) {
+      jQuery(fakeDiv).on("input paste", sendToArea);
+    } else {
+      fakeDiv.addEventListener("input", sendToArea);
+      fakeDiv.addEventListener("paste", sendToArea);
+    }
 
     fakeDiv.addEventListener("receive-content", function(e) {
       if (fakeDiv.innerText.length == 0) {
@@ -347,7 +356,7 @@ const Colorfy = class {
   }
 };
 
-$.fn.colorfy = function(syntaxDescriptor) {
+jQuery.fn.colorfy = function(syntaxDescriptor) {
   this.each(function(){
     let colorfyObject = new Colorfy(this);
     colorfyObject.colorfy(syntaxDescriptor);
