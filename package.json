@@ -9,7 +9,7 @@
         "form",
         "editor"
     ],
-    "version": "0.0.7",
+    "version": "0.0.8",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/cheunghy/jquery.colorfy/issues"
