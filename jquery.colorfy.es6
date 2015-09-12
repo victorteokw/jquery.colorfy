@@ -125,10 +125,13 @@ const _colorfy = function(text, descriptor, htmlfier, descriptorName) {
 };
 
 const colorfy = function(text, descriptorName) {
-  return _colorfy(text,
-                  $.fn.colorfy[descriptorName],
-                  htmlfy,
-                  descriptorName);
+  let descriptor;
+  if ($) {
+    descriptor = $.fn.colorfy[descriptorName];
+  } else {
+    descriptor = syntaxDescriptors[descriptorName];
+  }
+  return _colorfy(text, descriptor, htmlfy, descriptorName);
 };
 
 const parentsOfNode = function(node) {
@@ -332,7 +335,8 @@ const Colorfy = class {
       this.colorfyTriggeredChange = true;
       this.node.value = fakeDiv.dataText;
       this.colorfyTriggeredChange = false;
-      // Maybe trigger change here
+      var evt = new Event("change");
+      this.node.dispatchEvent(evt);
     });
 
     // Init copy data

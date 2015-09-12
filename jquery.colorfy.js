@@ -163,7 +163,13 @@ var _colorfy = function _colorfy(text, descriptor, htmlfier, descriptorName) {
 };
 
 var _colorfy2 = function _colorfy2(text, descriptorName) {
-  return _colorfy(text, $.fn.colorfy[descriptorName], htmlfy, descriptorName);
+  var descriptor = undefined;
+  if ($) {
+    descriptor = $.fn.colorfy[descriptorName];
+  } else {
+    descriptor = syntaxDescriptors[descriptorName];
+  }
+  return _colorfy(text, descriptor, htmlfy, descriptorName);
 };
 
 var parentsOfNode = function parentsOfNode(node) {
@@ -389,7 +395,8 @@ var Colorfy = (function () {
         _this.colorfyTriggeredChange = true;
         _this.node.value = fakeDiv.dataText;
         _this.colorfyTriggeredChange = false;
-        // Maybe trigger change here
+        var evt = new Event("change");
+        _this.node.dispatchEvent(evt);
       });
 
       // Init copy data
