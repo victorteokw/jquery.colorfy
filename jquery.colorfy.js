@@ -1,349 +1,372 @@
-(function() {
-  var colorfy, colorfyTriggersChange, commonAncestorOfTwoNodes, createNode, cursorLocationForRootNodeFromAnchorNodeAndOffset, dataTextToFormattedText, formattedTextToDataText, htmlfy, isChrome, isFirefox, isOldIE, lengthOfNode, lengthOfNodeToOffset, nodeAndOffsetFromCursorLocation, objectToAssociativeArray, parentsOfNode, restoreCursorLocation, saveCursorLocation;
+"use strict";
 
-  colorfyTriggersChange = false;
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
 
-  isOldIE = function() {
-    var ua;
-    ua = window.navigator.userAgent;
-    if (ua.indexOf("MSIE ") > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  };
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-  isChrome = function() {
-    var ua;
-    ua = window.navigator.userAgent;
-    if (ua.indexOf("Chrome") > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  };
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-  isFirefox = function() {
-    var ua;
-    ua = window.navigator.userAgent;
-    if (ua.indexOf("Firefox") > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  };
+var thisBrowser = (function () {
+  var _ieP = window.navigator.userAgent.indexOf("MSIE ") > 0;
+  var _chromeP = window.navigator.userAgent.indexOf("Chrome") > 0;
+  var _firefoxP = window.navigator.userAgent.indexOf("Firefox") > 0;
+  var _safariP = window.navigator.userAgent.indexOf("Safari") > 0;
+  if (_ieP) {
+    return "IE";
+  }
+  if (_chromeP) {
+    return "Chrome";
+  }
+  if (_firefoxP) {
+    return "Firefox";
+  }
+  if (_safariP) {
+    return "Safari";
+  }
+  return undefined;
+})();
 
-  objectToAssociativeArray = function(obj) {
-    var assObj, key, retArr, value;
-    if (Array.isArray(obj)) {
-      return obj;
-    }
-    retArr = [];
-    for (key in obj) {
-      value = obj[key];
-      assObj = {};
-      assObj[key] = value;
-      retArr.unshift(assObj);
-    }
-    return retArr;
-  };
+var assocArray = function assocArray() {
+  var obj = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  createNode = function(content, htmlfier, descriptor, klass) {
-    var node;
-    node = {};
-    node.content = content;
-    node.htmlfier = htmlfier;
-    node.descriptor = objectToAssociativeArray(descriptor);
-    node.klass = klass;
-    node.subnodes = [];
-    node.supernode = null;
-    node.processed = false;
-    node.terminate = false;
-    node.toHTML = function() {
-      var closeSpan, j, len, openSpan, ref;
-      if (!node.processed) {
-        node.process();
+  if (Array.isArray(obj)) return obj;
+  var retArr = [];
+  Object.keys(obj).forEach(function (k) {
+    retArr.unshift([k, obj[k]]);
+  });
+  return retArr;
+};
+
+var htmlfy = function htmlfy(dataText) {
+  return dataText.replace(/&/g, '&amp;') //       & -> &amp;
+  .replace(/</g, '&lt;') //       < -> &lt;
+  .replace(/>/g, '&gt;') //       > -> &gt;
+  .replace(/"/g, '&quot;') //       " -> &quot;
+  .replace(/'/g, '&apos;') //       ' -> &apos;
+  .replace(/\//g, '&#x2F;') //       / -> &#x2F;
+  .replace(/\n/g, '<br>') //      \n -> <br>
+  .replace(/ /g, '&nbsp;'); //     ' ' -> &nbsp;
+};
+
+var datafy = function datafy(formattedText) {
+  debugger;
+  return formattedText.replace(/<(?!br|\/br).+?>/gm, '') //  strip tags
+  .replace(/<br>/g, '\n') //  <br> -> \n
+  .replace(/&lt;/g, '<') //  &lt; -> <
+  .replace(/&gt;/g, '>') //  &gt; -> >
+  .replace(/&amp;/g, '&') //  &amp; -> &
+  .replace(/&quot;/g, '"') //  &quot -> "
+  .replace(/&apos;/g, "'") //  &apos -> '
+  .replace(/&#x2F/g, "/") //  &#x2F -> /
+  .replace(/&nbsp;/g, ' '); //  &nbsp; -> ' '
+};
+
+var ColorNode = (function () {
+  function ColorNode(content, htmlfier, descriptor, klass) {
+    _classCallCheck(this, ColorNode);
+
+    this.content = content;
+    this.htmlfier = htmlfier;
+    this.descriptor = assocArray(descriptor);
+    this.klass = klass;
+    this.subnodes = [];
+    this.supernode = null; // Unused
+    this.processed = false;
+    this.terminate = false;
+  }
+
+  _createClass(ColorNode, [{
+    key: "toHTML",
+    value: function toHTML() {
+      if (!this.processed) {
+        this.process();
       }
-      openSpan = this.klass ? "<span class='" + this.klass + "'>" : '';
-      content = '';
+      var openSpan = this.klass ? "<span class='" + this.klass + "'>" : '';
+      var closeSpan = this.klass ? '</span>' : '';
+      var content = [];
       if (this.terminate) {
-        content += this.htmlfier(this.content);
+        content.push(this.htmlfier(this.content));
       } else {
-        ref = this.subnodes;
-        for (j = 0, len = ref.length; j < len; j++) {
-          node = ref[j];
-          content += node.toHTML();
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = this.subnodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var node = _step.value;
+
+            content.push(node.toHTML());
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"]) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
         }
       }
-      closeSpan = this.klass ? "</span>" : '';
-      return openSpan + content + closeSpan;
-    };
-    node.process = function() {
-      var currentIndex, hasMatchData, matchData, matched, matchedNewNode, newNode, regexp, remainder, rule, unmatched, unmatchedNewNode;
-      if (this.descriptor.length === 0) {
+      return openSpan + content.join("") + closeSpan;
+    }
+  }, {
+    key: "process",
+    value: function process() {
+      if (this.descriptor.length == 0) {
         this.terminate = true;
       } else {
-        rule = this.descriptor.pop();
-        for (klass in rule) {
-          regexp = rule[klass];
+        var rule = this.descriptor.pop();
+
+        var _rule = _slicedToArray(rule, 2);
+
+        var klass = _rule[0];
+        var regexp = _rule[1];
+
+        var currentIndex = 0;
+        var remainder = this.content;
+        var matchData = undefined;
+        while (matchData = regexp.exec(remainder)) {
+          var hasMatchData = true;
+          var unmatched = remainder.substr(currentIndex, matchData.index);
+          var matched = matchData[0];
+          currentIndex = matched.length + matchData.index;
+          remainder = remainder.substr(currentIndex);
           currentIndex = 0;
-          remainder = this.content;
-          while (matchData = regexp.exec(remainder)) {
-            hasMatchData = true;
-            unmatched = remainder.substr(currentIndex, matchData.index);
-            matched = matchData[0];
-            currentIndex = matched.length + matchData.index;
-            remainder = remainder.substr(currentIndex);
-            currentIndex = 0;
-            if (unmatched.length > 0) {
-              unmatchedNewNode = createNode(unmatched, this.htmlfier, this.descriptor.slice(0), null);
-              this.subnodes.push(unmatchedNewNode);
-            }
-            matchedNewNode = createNode(matched, this.htmlfier, this.descriptor.slice(0), klass);
-            this.subnodes.push(matchedNewNode);
+          if (unmatched.length > 0) {
+            var unmatchedNewNode = new ColorNode(unmatched, this.htmlfier, this.descriptor.slice(0), null);
+            this.subnodes.push(unmatchedNewNode);
           }
-          newNode = createNode(remainder, this.htmlfier, this.descriptor.slice(0), null);
-          this.subnodes.push(newNode);
+          var matchedNewNode = new ColorNode(matched, this.htmlfier, this.descriptor.slice(0), klass);
+          this.subnodes.push(matchedNewNode);
         }
+        var newNode = new ColorNode(remainder, this.htmlfier, this.descriptor.slice(0), null);
+        this.subnodes.push(newNode);
       }
-      return node.processed = true;
-    };
-    return node;
-  };
-
-  htmlfy = function(dataText) {
-    dataText = dataText.replace(/&/g, '&amp;');
-    dataText = dataText.replace(/</g, '&lt;');
-    dataText = dataText.replace(/>/g, '&gt;');
-    dataText = dataText.replace(/"/g, '&quot;');
-    dataText = dataText.replace(/'/g, '&apos;');
-    dataText = dataText.replace(/\//g, '&#x2F;');
-    dataText = dataText.replace(/\n/g, '<br>');
-    dataText = dataText.replace(new RegExp(' ', 'g'), '&nbsp;');
-    return dataText;
-  };
-
-  colorfy = function(dataText, descriptor, htmlfier, descriptorName) {
-    var node;
-    htmlfier || (htmlfier = htmlfy);
-    node = createNode(dataText, htmlfier, descriptor, descriptorName);
-    return node.toHTML();
-  };
-
-  dataTextToFormattedText = function(dataText, syntaxDescriptor) {
-    return colorfy(dataText, $.fn.colorfy[syntaxDescriptor], htmlfy, syntaxDescriptor);
-  };
-
-  formattedTextToDataText = function(formattedText) {
-    formattedText = formattedText.replace(/<(?!br|\/br).+?>/gm, '');
-    formattedText = formattedText.replace(/<br>/g, '\n');
-    formattedText = formattedText.replace(/&lt;/g, '<');
-    formattedText = formattedText.replace(/&gt;/g, '>');
-    formattedText = formattedText.replace(/&amp;/g, '&');
-    formattedText = formattedText.replace(/&quot;/g, '"');
-    formattedText = formattedText.replace(/&apos;/g, "'");
-    formattedText = formattedText.replace(/&#x2F/g, "/");
-    formattedText = formattedText.replace(/&nbsp;/g, ' ');
-    return formattedText;
-  };
-
-  parentsOfNode = function(node) {
-    var nodes;
-    nodes = [node];
-    while (node = node.parentNode) {
-      nodes.unshift(node);
+      this.processed = true;
     }
-    return nodes;
-  };
+  }]);
 
-  commonAncestorOfTwoNodes = function(node1, node2) {
-    var i, j, parents1, parents2, ref;
-    parents1 = parentsOfNode(node1);
-    parents2 = parentsOfNode(node2);
-    if (parents1[0] !== parents2[0]) {
-      return null;
-    }
-    for (i = j = 0, ref = parents1.length; j < ref; i = j += 1) {
-      if (parents1[i] !== parents2[i]) {
-        return parents1[i - 1];
-      }
-    }
-  };
+  return ColorNode;
+})();
 
-  cursorLocationForRootNodeFromAnchorNodeAndOffset = function(rootNode, anchorNode, anchorOffset, currentNode) {
-    var childNode, j, len, location, ref;
-    if (!currentNode) {
-      currentNode = rootNode;
-    }
-    if (currentNode === anchorNode) {
-      return lengthOfNodeToOffset(anchorNode, anchorOffset);
-    } else if (!currentNode.contains(anchorNode) && rootNode.contains(commonAncestorOfTwoNodes(currentNode, anchorNode)) && (currentNode.compareDocumentPosition(anchorNode) === Node.DOCUMENT_POSITION_FOLLOWING)) {
-      return lengthOfNode(currentNode);
-    } else if (!currentNode.contains(anchorNode) && rootNode.contains(commonAncestorOfTwoNodes(currentNode, anchorNode)) && (currentNode.compareDocumentPosition(anchorNode) === Node.DOCUMENT_POSITION_PRECEDING)) {
-      return 0;
-    } else if (currentNode.contains(anchorNode)) {
-      location = 0;
-      ref = currentNode.childNodes;
-      for (j = 0, len = ref.length; j < len; j++) {
-        childNode = ref[j];
-        location += cursorLocationForRootNodeFromAnchorNodeAndOffset(rootNode, anchorNode, anchorOffset, childNode);
-      }
-      return location;
-    }
-  };
+// Unused currently, use $.fn.colorfy instead
+var syntaxDescriptors = {};
 
-  lengthOfNode = function(node) {
-    var childNode, j, len, length, ref;
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.nodeValue.length;
-    } else if (node.tagName === "BR") {
-      return 1;
-    } else if ((node.tagName === "SPAN") || (node.tagName === "DIV")) {
-      length = 0;
-      ref = node.childNodes;
-      for (j = 0, len = ref.length; j < len; j++) {
-        childNode = ref[j];
-        length += lengthOfNode(childNode);
-      }
-      return length;
-    }
-  };
+var _colorfy = function _colorfy(text, descriptor, htmlfier, descriptorName) {
+  htmlfier || (htmlfier = htmlfy);
+  var node = new ColorNode(text, htmlfier, descriptor, descriptorName);
+  return node.toHTML();
+};
 
-  lengthOfNodeToOffset = function(node, offset) {
-    var i, j, length, ref;
-    if (node.nodeType === Node.TEXT_NODE) {
-      return offset;
-    } else if (node.tagName === "BR") {
-      console.log("Is this correct behavior?");
-      return offset;
-    } else if ((node.tagName === "SPAN") || (node.tagName === "DIV")) {
-      length = 0;
-      for (i = j = 0, ref = offset; j < ref; i = j += 1) {
-        length += lengthOfNode(node.childNodes[i]);
-      }
-      return length;
-    }
-  };
+var colorfy = function colorfy(text, descriptorName) {
+  return _colorfy(text, $.fn.colorfy[descriptorName], htmlfy, descriptorName);
+};
 
-  nodeAndOffsetFromCursorLocation = function(location, node) {
-    var childNode, j, len, ref;
-    if (lengthOfNode(node) < location) {
-      return [];
+var parentsOfNode = function parentsOfNode(node) {
+  var nodes = [node];
+  while (node = node.parentNode) {
+    nodes.unshift(node);
+  }
+  return nodes;
+};
+
+var commonAncestor = function commonAncestor(n1, n2) {
+  var parents1 = parentsOfNode(n1);
+  var parents2 = parentsOfNode(n2);
+  if (parents1[0] != parents2[0]) return null;
+  for (var i = 0, len = parents1.length; i < len; i++) {
+    if (parents1[i] != parents2[i]) {
+      return parents1[i - 1];
     }
-    if (node.nodeType === Node.TEXT_NODE) {
+  }
+};
+
+var lengthOfNode = function lengthOfNode(node) {
+  if (node.nodeType == Node.TEXT_NODE) {
+    return node.nodeValue.length;
+  } else if (node.tagName == "BR") {
+    return 1;
+  } else if (node.tagName == "SPAN" || node.tagName == "DIV") {
+    var len = 0;
+    for (var i = 0, _len = node.childNodes.length; i < _len; i++) {
+      len += lengthOfNode(node.childNodes[i]);
+    }
+    return len;
+  }
+  return 0;
+};
+
+var lengthOfNodeToOffset = function lengthOfNodeToOffset(node, offset) {
+  if (node.nodeType == Node.TEXT_NODE) {
+    return offset;
+  } else if (node.tagName == "BR") {
+    // not correct behavior.
+    return offset;
+  } else if (node.tagName == "SPAN" || node.tagName == "DIV") {
+    var len = 0;
+    for (var i = 0; i < offset; i++) {
+      len += lengthOfNode(node.childNodes[i]);
+    }
+    return len;
+  }
+  return offset;
+};
+
+var cursorLocation = function cursorLocation(root, anchor, offset, cur) {
+  if (!cur) cur = root;
+  if (cur == anchor) {
+    return lengthOfNodeToOffset(anchor, offset);
+  } else if (!cur.contains(anchor) && // current node before anchor
+  root.contains(commonAncestor(cur, anchor)) && cur.compareDocumentPosition(anchor) == Node.DOCUMENT_POSITION_FOLLOWING) {
+    return lengthOfNode(cur);
+  } else if (!cur.contains(anchor) && // current node after anchor
+  root.contains(commonAncestor(cur, anchor)) && cur.compareDocumentPosition(anchor) == Node.DOCUMENT_POSITION_PRECEDING) {
+    return 0;
+  } else if (cur.contains(anchor)) {
+    var _location = 0;
+    for (var i = 0, len = cur.childNodes.length; i < len; i++) {
+      _location += cursorLocation(root, anchor, offset, cur.childNodes[i]);
+    }
+    return _location;
+  }
+  return 0;
+};
+
+var nodeAndOffset = function nodeAndOffset(_x2, _x3) {
+  var _again = true;
+
+  _function: while (_again) {
+    var location = _x2,
+        node = _x3;
+    i = _len = child = undefined;
+    _again = false;
+
+    if (lengthOfNode(node) < location) return [];
+    if (node.nodeType == Node.TEXT_NODE) {
       return [node, location];
-    } else if (node.tagName === "BR") {
-      if (isChrome()) {
-        return [node.nextSibling, 0];
-      } else if (isFirefox()) {
-        if (node.nextSibling.tagName === "BR") {
+    } else if (node.tagName == "BR") {
+      switch (thisBrowser) {
+        case "Chrome":
           return [node.nextSibling, 0];
-        } else {
-          return [node, 0];
-        }
-      } else {
-        return [node, location];
+          break;
+        case "Firefox":
+          if (node.nextSibling.tagname == "BR") {
+            return [node, nextSibling, 0];
+          } else {
+            return [node, 0];
+          }
+        case "IE":
+        case "Safari":
+        default:
+          return [node, location];
       }
     } else {
-      ref = node.childNodes;
-      for (j = 0, len = ref.length; j < len; j++) {
-        childNode = ref[j];
-        if (lengthOfNode(childNode) < location) {
-          location -= lengthOfNode(childNode);
+      for (var i = 0, _len = node.childNodes.length; i < _len; i++) {
+        var child = node.childNodes[i];
+        if (lengthOfNode(child) < location) {
+          location -= lengthOfNode(child);
         } else {
-          return nodeAndOffsetFromCursorLocation(location, childNode);
+          _x2 = location;
+          _x3 = child;
+          _again = true;
+          continue _function;
         }
       }
     }
-  };
+  }
+};
 
-  saveCursorLocation = function(jObject) {
-    var anchorNode, anchorOffset, cursorLo, plainObject, sel;
-    plainObject = jObject[0];
-    if (document.activeElement !== plainObject) {
-      return;
-    }
-    sel = window.getSelection();
-    if (!sel.isCollapsed) {
-      return;
-    }
-    anchorNode = sel.anchorNode;
-    anchorOffset = sel.anchorOffset;
-    if (!plainObject.contains(anchorNode)) {
-      return;
-    }
-    cursorLo = cursorLocationForRootNodeFromAnchorNodeAndOffset(plainObject, anchorNode, anchorOffset);
-    return jObject.data("cursorlocation", cursorLo);
-  };
+var restoreCursor = function restoreCursor(root) {
+  if (document.activeElement != root) return;
+  var sel = window.getSelection();
+  if (!sel.isCollapsed) return;
 
-  restoreCursorLocation = function(jObject) {
-    var anchorNode, anchorOffset, plainObject, ref, sel;
-    plainObject = jObject[0];
-    if (document.activeElement !== plainObject) {
-      return;
-    }
-    sel = window.getSelection();
-    if (!sel.isCollapsed) {
-      return;
-    }
-    ref = nodeAndOffsetFromCursorLocation(jObject.data("cursorlocation"), plainObject), anchorNode = ref[0], anchorOffset = ref[1];
-    if (anchorNode && anchorOffset >= 0) {
-      return sel.collapse(anchorNode, anchorOffset);
-    }
-  };
+  var _nodeAndOffset = nodeAndOffset(root.getAttribute('data-cursor'), root);
 
-  $.fn.colorfy = function(syntaxDescriptor) {
-    if (isOldIE()) {
-      return;
+  var _nodeAndOffset2 = _slicedToArray(_nodeAndOffset, 2);
+
+  var anchor = _nodeAndOffset2[0];
+  var offset = _nodeAndOffset2[1];
+
+  if (anchor && offset >= 0) {
+    sel.collapse(anchor, offset);
+  }
+};
+
+var saveCursor = function saveCursor(root) {
+  if (document.activeElement != root) return;
+  var sel = window.getSelection();
+  if (!sel.isCollapsed) return;
+  var anchor = sel.anchorNode;
+  var offset = sel.anchorOffset;
+  if (!root.contains(anchor)) return;
+  var loc = cursorLocation(root, anchor, offset);
+  root.setAttribute('data-cursor', loc);
+};
+
+var colorfyTriggersChange = false;
+
+$.fn.colorfy = function (syntaxDescriptor) {
+  this.each(function () {
+    var $this = $(this);
+
+    // Create fake text area
+    // which is actually a 'contenteditable' div
+    var div = $("<div></div>");
+    div.attr("contenteditable", "true");
+
+    // Copy style
+    div.attr("class", $this.attr("class"));
+
+    // Prevent content to overflow to the outside
+    div.css("max-height", $this.height());
+    div.css("height", $this.height());
+
+    if ($this.prop("tagName") == "input") {
+      div.css("overflow", "hidden");
+    } else {
+      div.css("overflow", "scroll");
     }
-    return this.each(function() {
-      var $this, area, div;
-      $this = $(this);
-      div = $("<div></div>");
-      div.attr("contenteditable", "true");
-      div.attr("class", $this.attr("class"));
-      div.css("max-height", $this.height());
-      div.css("height", $this.height());
-      if ($this.prop("tagName") === "input") {
-        div.css("overflow", "hidden");
-      } else {
-        div.css("overflow", "scroll");
+
+    // append it
+    $this.after(div);
+    // Hide the original one
+    $this.css("display", "none");
+
+    var area = $this;
+    area.on("keyup paste change input", function (e) {
+      if (!colorfyTriggersChange) {
+        div.data("content", area.val()).trigger("receive-content");
       }
-      $this.after(div);
-      $this.css("display", "none");
-      area = $this;
-      area.on("keyup paste change input", function(e) {
-        if (!colorfyTriggersChange) {
-          div.data("content", area.val()).trigger("receive-content");
-        }
-        return colorfyTriggersChange = false;
-      });
-      div.on("receive-content", function(e) {
-        if (div.text().length === 0) {
-          div.css("display", "block");
-        } else {
-          div.css("display", "inline-block");
-        }
-        div.html(dataTextToFormattedText(div.data("content"), syntaxDescriptor));
-        restoreCursorLocation(div);
-      });
-      div.on("send-content", function(e) {
-        if (div.text().length === 0) {
-          div.css("display", "block");
-        } else {
-          div.css("display", "inline-block");
-        }
-        colorfyTriggersChange = true;
-        return area.val(div.data("content")).trigger("change");
-      });
-      div.on("input paste", function(e) {
-        if (true) {
-          saveCursorLocation(div);
-          div.data("content", formattedTextToDataText(div.html())).trigger("send-content").trigger("receive-content");
-        }
-      });
-      return div.data("content", $this.val()).trigger("receive-content");
+      colorfyTriggersChange = false;
     });
-  };
 
-}).call(this);
+    div.on("receive-content", function (e) {
+      if (div.text().length == 0) {
+        div.css("display", "block");
+      } else {
+        div.css("display", "inline-block");
+      }
+      div.html(colorfy(div.data("content"), syntaxDescriptor));
+      restoreCursor(div[0]);
+    });
+
+    div.on("send-content", function (e) {
+      colorfyTriggersChange = true;
+      area.val(div.data("content")).trigger("change");
+    });
+
+    div.on("input paste", function (e) {
+      saveCursor(div[0]);
+      div.data("content", datafy(div.html())).trigger("send-content").trigger("receive-content");
+    });
+
+    // Initialize content
+    div.data("content", $this.val()).trigger("receive-content");
+  });
+};

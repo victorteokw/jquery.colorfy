@@ -1,5 +1,6 @@
 var gulp = require('gulp'),
     coffee = require('gulp-coffee'),
+    babel = require('gulp-babel'),
     concat = require('gulp-concat'),
     jshint = require('gulp-jshint'),
     uglify = require('gulp-uglify');
@@ -26,4 +27,12 @@ gulp.task('minify', ['dist'], function() {
         .pipe(gulp.dest('.'));
     }
   );
+});
+
+gulp.task('dist2', function() {
+  ['jquery.colorfy.es6'].forEach(function(fileName){
+    gulp.src(fileName)
+      .pipe(babel())
+      .pipe(gulp.dest('.'));
+  });
 });
