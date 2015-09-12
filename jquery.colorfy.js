@@ -49,7 +49,6 @@ var htmlfy = function htmlfy(dataText) {
 };
 
 var datafy = function datafy(formattedText) {
-  debugger;
   return formattedText.replace(/<(?!br|\/br).+?>/gm, '') //  strip tags
   .replace(/<br>/g, '\n') //  <br> -> \n
   .replace(/&lt;/g, '<') //  &lt; -> <
@@ -163,7 +162,7 @@ var _colorfy = function _colorfy(text, descriptor, htmlfier, descriptorName) {
   return node.toHTML();
 };
 
-var colorfy = function colorfy(text, descriptorName) {
+var _colorfy2 = function _colorfy2(text, descriptorName) {
   return _colorfy(text, $.fn.colorfy[descriptorName], htmlfy, descriptorName);
 };
 
@@ -309,64 +308,104 @@ var saveCursor = function saveCursor(root) {
   root.setAttribute('data-cursor', loc);
 };
 
-var colorfyTriggersChange = false;
+var Colorfy = (function () {
+  function Colorfy(node) {
+    _classCallCheck(this, Colorfy);
+
+    this.node = node;
+  }
+
+  _createClass(Colorfy, [{
+    key: "colorfy",
+    value: function colorfy(syntaxDescriptor) {
+      var _this = this;
+
+      // Create fake text area
+      // which is actually a 'contenteditable' div
+      var fakeDiv = document.createElement('div');
+      fakeDiv.setAttribute("contenteditable", true);
+
+      // Copy style
+      fakeDiv.setAttribute("class", this.node.getAttribute("class"));
+
+      // Prevent content to overflow to the outside
+      fakeDiv.style.maxHeight = this.node.clientHeight;
+      fakeDiv.style.height = this.node.clientHeight;
+
+      // Special for input
+      if (this.node.tagName == "INPUT") {
+        fakeDiv.style.overflow = "hidden";
+      } else {
+        fakeDiv.style.overflow = "scroll";
+      }
+
+      // after it
+      this.node.parentNode.insertBefore(fakeDiv, this.node.nextSibling);
+
+      // Hide the original one
+      this.node.style.display = "none";
+
+      // Tracking if current change event is triggered by colorfy
+      this.colorfyTriggeredChange = false;
+
+      // Events
+      var sendToFakeDiv = function sendToFakeDiv() {
+        if (!_this.colorfyTriggeredChange) {
+          fakeDiv.dataText = _this.node.value;
+          var _event = document.createEvent("CustomEvent");
+          _event.initEvent("receive-content", true, true);
+          fakeDiv.dispatchEvent(_event);
+        }
+      };
+      this.node.addEventListener("keyup", sendToFakeDiv);
+      this.node.addEventListener("paste", sendToFakeDiv);
+      this.node.addEventListener("change", sendToFakeDiv);
+      this.node.addEventListener("input", sendToFakeDiv);
+
+      var sendToArea = function sendToArea() {
+        saveCursor(fakeDiv);
+        fakeDiv.dataText = datafy(fakeDiv.innerHTML);
+        var event = document.createEvent("CustomEvent");
+        event.initEvent("send-content", true, true);
+        fakeDiv.dispatchEvent(event);
+        event = document.createEvent("CustomEvent");
+        event.initEvent("receive-content", true, true);
+        fakeDiv.dispatchEvent(event);
+      };
+      fakeDiv.addEventListener("input", sendToArea);
+      fakeDiv.addEventListener("paste", sendToArea);
+
+      fakeDiv.addEventListener("receive-content", function (e) {
+        if (fakeDiv.innerText.length == 0) {
+          fakeDiv.style.display = "block";
+        } else {
+          fakeDiv.style.display = "inline-block";
+        }
+        fakeDiv.innerHTML = _colorfy2(fakeDiv.dataText, syntaxDescriptor);
+        restoreCursor(fakeDiv);
+      });
+
+      fakeDiv.addEventListener("send-content", function (e) {
+        _this.colorfyTriggeredChange = true;
+        _this.node.value = fakeDiv.dataText;
+        _this.colorfyTriggeredChange = false;
+        // Maybe trigger change here
+      });
+
+      // Init copy data
+      fakeDiv.dataText = this.node.value;
+      var event = document.createEvent("CustomEvent");
+      event.initEvent("receive-content", true, true);
+      fakeDiv.dispatchEvent(event);
+    }
+  }]);
+
+  return Colorfy;
+})();
 
 $.fn.colorfy = function (syntaxDescriptor) {
   this.each(function () {
-    var $this = $(this);
-
-    // Create fake text area
-    // which is actually a 'contenteditable' div
-    var div = $("<div></div>");
-    div.attr("contenteditable", "true");
-
-    // Copy style
-    div.attr("class", $this.attr("class"));
-
-    // Prevent content to overflow to the outside
-    div.css("max-height", $this.height());
-    div.css("height", $this.height());
-
-    if ($this.prop("tagName") == "input") {
-      div.css("overflow", "hidden");
-    } else {
-      div.css("overflow", "scroll");
-    }
-
-    // append it
-    $this.after(div);
-    // Hide the original one
-    $this.css("display", "none");
-
-    var area = $this;
-    area.on("keyup paste change input", function (e) {
-      if (!colorfyTriggersChange) {
-        div.data("content", area.val()).trigger("receive-content");
-      }
-      colorfyTriggersChange = false;
-    });
-
-    div.on("receive-content", function (e) {
-      if (div.text().length == 0) {
-        div.css("display", "block");
-      } else {
-        div.css("display", "inline-block");
-      }
-      div.html(colorfy(div.data("content"), syntaxDescriptor));
-      restoreCursor(div[0]);
-    });
-
-    div.on("send-content", function (e) {
-      colorfyTriggersChange = true;
-      area.val(div.data("content")).trigger("change");
-    });
-
-    div.on("input paste", function (e) {
-      saveCursor(div[0]);
-      div.data("content", datafy(div.html())).trigger("send-content").trigger("receive-content");
-    });
-
-    // Initialize content
-    div.data("content", $this.val()).trigger("receive-content");
+    var colorfyObject = new Colorfy(this);
+    colorfyObject.colorfy(syntaxDescriptor);
   });
 };

@@ -7,7 +7,7 @@ var gulp = require('gulp'),
 function minName(fileName) {
   return fileName.slice(0, fileName.length - 2) + "min.js";
 }
-gulp.task('dist', function() {
+gulp.task('distc', function() {
   ['jquery.colorfy.coffee', 'jquery.colorfy.markdown.coffee'].forEach(
     function(fileName){
       gulp.src(fileName)
@@ -18,7 +18,7 @@ gulp.task('dist', function() {
 });
 
 gulp.task('minify', ['dist'], function() {
-  ['jquery.colorfy.js', 'jquery.colorfy.markdown.js'].forEach(
+  ['jquery.colorfy.js'].forEach(
     function(fileName){
       gulp.src(fileName)
         .pipe(jshint())
@@ -29,7 +29,7 @@ gulp.task('minify', ['dist'], function() {
   );
 });
 
-gulp.task('dist2', function() {
+gulp.task('dist', function() {
   ['jquery.colorfy.es6'].forEach(function(fileName){
     gulp.src(fileName)
       .pipe(babel())
