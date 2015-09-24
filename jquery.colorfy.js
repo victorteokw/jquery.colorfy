@@ -392,7 +392,13 @@ var Colorfy = (function () {
       }
 
       fakeDiv.addEventListener("receive-content", function (e) {
-        if (fakeDiv.innerText.length == 0) {
+        var innerText = "";
+        if (thisBrowser == "Firefox") {
+          innerText = fakeDiv.textContent;
+        } else {
+          innerText = fakeDiv.innerText;
+        }
+        if (innerText.length == 0) {
           fakeDiv.style.display = "block";
         } else {
           fakeDiv.style.display = "inline-block";

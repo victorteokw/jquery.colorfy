@@ -1,9 +1,9 @@
 var gulp = require('gulp'),
-    coffee = require('gulp-coffee'),
     babel = require('gulp-babel'),
     concat = require('gulp-concat'),
     jshint = require('gulp-jshint'),
     uglify = require('gulp-uglify');
+
 function minName(fileName) {
   return fileName.slice(0, fileName.length - 2) + "min.js";
 }
