@@ -25,7 +25,10 @@ $.fn.colorfy.yourDescriptor = {
 Left hand side, aka key, is css class name.
 Right hand side, aka value, is regexp to match.
 
-## Known Bugs
+## Known Limitations and Bugs
+* Placeholder is not supported yet.
+* Readonly is not supported yet.
+* The event binding has bugs
 * It only works well in Safari and Chrome.
 * In Firefox when user press enter/return, cursor jumps incorrectly.
 * Due to system input method, Chinese and Japanese are not supported.
