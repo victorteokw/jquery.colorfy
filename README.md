@@ -1,7 +1,7 @@
 # jquery.colorfy
 jQuery plugin that colorfies your textarea.
 
-=> [Online demo and homepage](http://cheunghy.github.io/jquery.colorfy/)
+=> [Online demo and homepage](http://zhangkaiyufromdongbei.github.io/jquery.colorfy/)
 
 It's available on npm and bower.
 
