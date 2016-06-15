@@ -330,7 +330,7 @@ var Colorfy = (function () {
       // Create fake text area
       // which is actually a 'contenteditable' div
       var fakeDiv = document.createElement('div');
-      fakeDiv.setAttribute("contenteditable", true);
+      if (this.node.getAttribute("readonly") == null) fakeDiv.setAttribute("contenteditable", true);
 
       // Copy style
       fakeDiv.setAttribute("class", this.node.getAttribute("class"));
